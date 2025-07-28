@@ -1,2 +1,2 @@
-python space.py
+python test.py
 pause

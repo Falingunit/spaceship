@@ -3,9 +3,9 @@ import json
 import math
 import sys
 
-from spaceship.utils import SIZE_X, SIZE_Y, CHAR_MAP, get_index
+from spaceship.input.input import SIZE_X, SIZE_Y, CHAR_MAP, get_index
 from spaceship.game import Game
-from spaceship.sprite import Sprite
+from spaceship.logic.sprite import Sprite
 
 # ————————————————————————————————————— SETUP ENGINE —————————————————————————————————————
 
@@ -132,13 +132,6 @@ def init():
 
     summon_player()
 
-    sprite = Sprite()
-    sprite.load("12345\nabcde\n123\t45\nabcde")
-
-    sprite.position_x = 0
-    sprite.position_y = 0
-
-    game.sprites.append(sprite)
 
 
 def end():
@@ -149,7 +142,7 @@ def end():
         json.dump(settings, f, indent=1)
 
     # Clean exit
-    game.console.restore()
+    game.input.restore()
     game.renderer.clear_screen()
     sys.exit()
 
@@ -200,7 +193,7 @@ def blast_asteroids(obj):
     radius = random.randint(
         settings['asteroid_blast_size_min'], settings['asteroid_blast_size_max']
     )
-    for other in list(game.objects):
+    for other in list(game.entities):
         if other['char'] in ('r','b') and distance(other, obj) <= radius:
             other['dead'] = True
             if other['char'] == 'r':
@@ -216,12 +209,11 @@ def blast_asteroids(obj):
         dy = random.randint(-radius, radius)
         nx = max(0, min(SIZE_X - 1, obj['x'] + dx))
         ny = max(0, min(SIZE_Y - 1, obj['y'] + dy))
-        start_blast_animation(nx, ny,
-                              settings['asteroid_blast_anim_base_delay'] + random.random())
+        start_blast_animation(nx, ny, settings['asteroid_blast_anim_base_delay'] + random.random())
 
 
 def summon_asteroid():
-    game.objects.append({
+    game.add_object({
         'x': random.randint(0, SIZE_X - 1),
         'y': 0, 'time': 0,
         'update': update_asteroid,
@@ -230,7 +222,7 @@ def summon_asteroid():
 
 
 def summon_asteroid_pos(x, y):
-    game.objects.append({
+    game.add_object({
         'x': x, 'y': y, 'time': 0,
         'update': update_asteroid,
         'char': 'r', 'dead': False
@@ -249,9 +241,8 @@ def update_asteroid(a):
 
 
 # Alien functions
-
 def summon_alien():
-    game.objects.append({
+    game.add_object({
         'x': random.randint(0, SIZE_X - 1),
         'y': 0, 'time': 0,
         'update': update_alien,
@@ -277,7 +268,7 @@ def summon_player():
     sprite = Sprite()
     sprite.load(sprite_raw)
 
-    game.objects.append({
+    game.add_object({
         'x': random.randint(0, SIZE_X - 1),
         'y': SIZE_Y - 2,
         'update': update_player,
@@ -286,13 +277,13 @@ def summon_player():
         'dead': False
     })
 
-    sprite.position_x = game.objects[-1]['x']
-    sprite.position_y = game.objects[-1]['y']
+    sprite.position_x = game.entities[-1]['x']
+    sprite.position_y = game.entities[-1]['y']
 
 
 def update_player(p):
     global energy
-    keys = game.console.get_keys_held()
+    keys = game.input.get_keys_held()
     if 'q' in keys:
         end()
     if 'a' in keys or 'LEFT' in keys:
@@ -314,7 +305,7 @@ def player_shoot(p):
 
 
 def summon_bullet(p):
-    game.objects.append({
+    game.add_object({
         'x': p['x'], 'y': p['y'] - 1,
         'update': update_bullet,
         'char': 'b', 'dead': False
@@ -326,7 +317,7 @@ def update_bullet(b):
         b['dead'] = True
         return
     b['y'] -= 1
-    for obj in list(game.objects):
+    for obj in list(game.entities):
         if obj['char'] == 'r' and obj['x'] == b['x'] and abs(obj['y'] - b['y']) <= 1:
             blast_asteroids(obj)
             b['dead'] = True

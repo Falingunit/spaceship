@@ -1,0 +1,5 @@
+# --- Global settings ---
+SIZE_X, SIZE_Y = 100, 30
+CELL_WIDTH = 1
+LEFT_MARGIN, RIGHT_MARGIN = 4, 4
+TOP_MARGIN, BOTTOM_MARGIN = 1, 1
