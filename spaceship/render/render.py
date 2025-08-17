@@ -1,83 +1,101 @@
 import shutil
 from sys import stdout
 
-from ..utils.constants import SIZE_X, SIZE_Y, LEFT_MARGIN, RIGHT_MARGIN, TOP_MARGIN, BOTTOM_MARGIN, CELL_WIDTH
+from ..render.hud import HUD
+
+from ..utils.constants import SIZE_X, SIZE_Y, LEFT_MARGIN, TOP_MARGIN, CELL_WIDTH
 
 class Renderer:
-    """Manages the grid, HUD buffers, and efficient redraws."""
+    """
+    Manages the game grid buffer and efficient terminal redraws.
+    """
     def __init__(self):
-        # Buffers
-        self.prev_grid = [''] * (SIZE_X * SIZE_Y)
-        self.prev_term = shutil.get_terminal_size()
+        # Frame buffer holding the last drawn state (used for diffing)
+        self.prev_grid = [' '] * (SIZE_X * SIZE_Y)
 
-        # HUD containers (populated by Game)
-        self.top_hud    = []
-        self.bottom_hud = []
-        self.prev_top    = []
-        self.prev_bottom = []
-
-        # Row calculations
-        self.top_row = 1
-
-    def move_to(self, r, c):
-        return f"\033[{r};{c}H"
-
-    def clear_screen(self):
-        stdout.write("\033[2J\033[H")
-        stdout.flush()
+        # Track terminal size so we can detect when it changes
+        self.prev_terminal_size = shutil.get_terminal_size()
     
-    def draw_diff(self, grid_start, render: list[str]):
-        """Only redraw cells that changed since last frame."""
-        stdout.write("\033[?25l")  # hide cursor
+    # --- HUD drawing ---
+    def draw_hud_top(self, rendered: list[list[str]]):
+        """
+        Render the top HUD.
+        """
+        # Move cursor to the top-left corner
+        stdout.write("\033[H")
+        # Iterate over the rendered HUD and print each line
+        for row in rendered:
+            stdout.write(' ' * LEFT_MARGIN + ''.join(row) + '\n')
+
+    def draw_hud_bottom(self, grid_start: int, rendered: list[list[str]]):
+        """
+        Render the bottom HUD.
+        """
+        # Move cursor to the bottom of the terminal
+        stdout.write("\033[" + str(SIZE_Y + TOP_MARGIN + grid_start) + ";0H")
+        # Iterate over the rendered HUD and print each line
+        for row in rendered:
+            stdout.write(' ' * LEFT_MARGIN + ''.join(row) + '\n')
+    
+    # --- Grid Drawing ---
+    def draw_diff(self, grid_start: int, render: list[str]):
+        """
+        Redraw only the cells that have changed since the last frame.
+
+        Args:
+            grid_start (int): Terminal row where the grid begins.
+            render (list[str]): Flat list of characters to render.
+        """
+        # Hide cursor
+        stdout.write("\033[?25l")
+
+        # Iterate over the new render and compare with the previous state
         for i, cell in enumerate(render):
             if cell != self.prev_grid[i]:
+                # Convert 1D index to 2D grid coordinates
                 y, x = divmod(i, SIZE_X)
-                r = grid_start + y
-                c = LEFT_MARGIN + x * CELL_WIDTH + 1
+
+                # Calculate terminal row and column
+                r = TOP_MARGIN + grid_start + y + 1
+                c = LEFT_MARGIN + x * CELL_WIDTH
+
+                # Move cursor and draw new character
                 stdout.write(self.move_to(r, c) + cell)
+
+                # Update buffer
                 self.prev_grid[i] = cell
         stdout.flush()
 
-    def draw_hud(self, hud, prev_buf, start_row):
-        """Render HUD entries (left/center/right aligned)."""
-        counts = {'l': 0, 'c': 0, 'r': 0}
-        for idx, entry in enumerate(hud):
-            txt, align = entry['content'], entry['align']
-            row = start_row + counts[align]
-            counts[align] += 1
-
-            # Only redraw if changed
-            if idx < len(prev_buf) and txt != prev_buf[idx]:
-                if align == 'l':
-                    col = LEFT_MARGIN + 1
-                elif align == 'c':
-                    col = LEFT_MARGIN + (SIZE_X * CELL_WIDTH)//2 - len(txt)//2 + 1
-                else:  # 'r'
-                    col = LEFT_MARGIN + SIZE_X * CELL_WIDTH + RIGHT_MARGIN - len(txt) + 1
-
-                stdout.write(self.move_to(row, col))
-                stdout.write(' ' * max(len(prev_buf[idx]), len(txt)))
-                stdout.write(self.move_to(row, col) + txt)
-                prev_buf[idx] = txt
-
-        stdout.flush()
-
     def update_full(self):
-        """Full clear & redraw of HUD + grid + recalc term size."""
-        self.prev_top    = [''] * len(self.top_hud)
-        self.prev_bottom = [''] * len(self.bottom_hud)
-        self.prev_term   = shutil.get_terminal_size()
+        """
+        Full clear and redraw of the grid.
+        Resets buffer and updates terminal size snapshot.
+        """
+        # Reset state
+        self.prev_grid = [' '] * (SIZE_X * SIZE_Y)
+        self.prev_terminal_size = shutil.get_terminal_size()
 
+        # Clear the screen
         self.clear_screen()
 
-        grid_start   = self.top_row + len(self.top_hud) + TOP_MARGIN
-        bottom_start = grid_start + SIZE_Y + BOTTOM_MARGIN
-
-        self.draw_hud(self.top_hud, self.prev_top,    self.top_row)
-        self.draw_diff(grid_start, [' '] * SIZE_X * SIZE_Y)
-        self.draw_hud(self.bottom_hud, self.prev_bottom, bottom_start)
-
+    # --- Utility Methods ---
+    def move_to(self, r: int, c: int) -> str:
+        """
+        Return an ANSI escape code to move the cursor to (row, col).
+        Terminal cursor positions are 1-based.
+        """
+        return f"\033[{r};{c}H"
+    def clear_screen(self):
+        """
+        Clear the terminal screen completely and reset cursor to top-left.
+        """
+        stdout.write("\033[2J\033[H")
+        stdout.flush()
     def check_resize(self):
-        """Trigger a full redraw if the terminal size changed."""
-        if shutil.get_terminal_size() != self.prev_term:
+        """
+        Detect if the terminal was resized.
+        If so, trigger a full redraw to avoid misalignment.
+        """
+        size = shutil.get_terminal_size()
+        if size != self.prev_terminal_size:
             self.update_full()

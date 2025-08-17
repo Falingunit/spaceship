@@ -1,2 +1,2 @@
-python test.py
+python outpost_blitz.py
 pause
