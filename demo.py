@@ -8,8 +8,10 @@ from spaceship.utils.constants import *
 
 class Rock(Entity):
 	
-	def __init__(self, game: Game, position: Vector = Vector()):
+	def __init__(self, game: Game, bounce_hook, velocity_hud: HUDElement, position: Vector = Vector()):
 		super().__init__(game, position)
+		self.vel_hud = velocity_hud
+		self.bounce_hook = bounce_hook
 		self.sprite.load((
 """
 ⢀⡴⠑⡄⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
@@ -26,18 +28,9 @@ class Rock(Entity):
 ⠀⠀⠀⠀⠀⠀⣀⣀⣈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀ 
 ⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀ 
 ⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠛⠉
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿\t⠿⠿⠿⠛⠉
 """
-))
-		self.sprite.load(
-"""
-  _._
-.'--.`.
-|  \t.' |
- `--`'
-"""
-		)
-		
+))		
 		self.position = Vector(10, 0)
 		self.velocity = Vector()
 
@@ -57,9 +50,13 @@ class Rock(Entity):
 			self.velocity += Vector(1, 0) * speed
 
 		self.velocity += Vector(0, 20) * dt
-		if self.position.y >= SIZE_Y - 6:
-			self.position.y = SIZE_Y - 6
-			self.velocity.y *= -0.5
+		if self.position.y >= SIZE_Y - 2:
+			self.position.y = SIZE_Y - 2
+			self.velocity.y *= -1
+			self.bounce_hook()
+
+		self.vel_hud.set_value('x', str(int(self.velocity.x)))
+		self.vel_hud.set_value('y', str(int(self.velocity.y)))
 
 		self.position += self.velocity * dt
 
@@ -70,25 +67,29 @@ class SpaceInveders():
 		self.game = Game(init_hook = self.init, update_hook = self.update, border = True)
 		self.game.run()
 
-
-
 	def init(self):
-		self.game.add_entity(Rock(self.game, Vector(10, 10)))
+		vel_hud = HUDElement(template='Velocity: (`x`,`y`)', values={'x': '0', 'y': '0'}, align=HUDAlignment.LEFT)
+		self.shrek = Rock(self.game, self.shrek_bounced, vel_hud, Vector(10, 10))
+		self.game.add_entity(self.shrek)
 
 		self.game.camera.mode = CameraMode.CENTER
 
+		self.game.hud.add_bottom_hud(vel_hud)
 		self.game.hud.add_top_hud(
 			HUDElement(
-				template='Player Name: `player_name`',
-				values={'player_name': 'Player1'},
+				template='Shrek Bounce',
+				values={},
 				align=HUDAlignment.CENTER
 			))
-		self.game.hud.add_bottom_hud(
-			HUDElement(
-				template='Score: `score`',
+		self.bottom_hud = HUDElement(
+				template='Number of bounces: `score`',
 				values={'score': '0'},
 				align=HUDAlignment.RIGHT
-			))
+		)
+		self.game.hud.add_bottom_hud(self.bottom_hud)
+
+	def shrek_bounced(self):
+		self.bottom_hud.set_value('score', str(int(self.bottom_hud.values['score']) + 1))
 
 	def update(self, dt: float):
 		held_keys = self.game.input.keys_held

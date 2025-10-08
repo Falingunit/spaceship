@@ -1,2 +1,0 @@
-python outpost_blitz.py
-pause
