@@ -68,6 +68,10 @@ class Camera:
             # Iterate sprite pixel grid
             for y, line in enumerate(sprite.decoded_string):
                 for x, pixel in enumerate(line):
+
+                    #Skip transparent pixels
+                    if pixel == '\a': continue
+
                     # Position relative to sprite center
                     rel = Vector(x, y) - center_floored
                     # Transform to world/screen position

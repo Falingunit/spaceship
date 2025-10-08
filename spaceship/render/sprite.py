@@ -35,6 +35,7 @@ class Sprite:
         for i, line in enumerate(lines):
             # If a tab appears in this line, treat its position as the center
             if '\t' in line:
+                if centerDefined: raise ValueError("Too many \\t characters in sprite.")
                 centerDefined = True
                 # Center is the first tab's column (x) and current row (y)
                 self.center = Vector(line.index('\t'), i)
@@ -48,7 +49,5 @@ class Sprite:
         # Store values for rendering
         self.raw_string = raw_string
         self.decoded_string = lines
-        # Width is the length of the first row; height is number of rows
-        # (Assumes non-empty input and uniform row lengths.)
-        self.size = Vector(len(lines[0]), len(lines))
+        self.size = Vector(max(len(line) for line in lines), len(lines))
         self.priority = priority

@@ -11,7 +11,7 @@ CELL_WIDTH = 1
 # Padding around the grid, in terminal columns/rows.
 # LEFT/RIGHT affect the starting column for each drawn cell,
 # TOP/BOTTOM can be used by a HUD or spacing above/below the grid.
-LEFT_MARGIN = 0
+LEFT_MARGIN = 2
 RIGHT_MARGIN = 1
 TOP_MARGIN = 0
 

@@ -22,12 +22,8 @@ class Input:
 
         for key in keys_to_check:
             try:
-                # Check if the key is currently being pressed
-                try:
-                    if keyboard.is_pressed(key):
-                        held.append(key)
-                except:
-                    return held
+                if keyboard.is_pressed(key):
+                    held.append(key)
             except:
                 # Ignore errors from invalid/unrecognized keys
                 pass

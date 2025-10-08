@@ -21,21 +21,31 @@ class Renderer:
         """
         Render the top HUD.
         """
-        # Move cursor to the top-left corner
+        # Hide cursor and move it to top-left corner
+        stdout.write("\033[?25l")
         stdout.write("\033[H")
+
         # Iterate over the rendered HUD and print each line
         for row in rendered:
             stdout.write(' ' * LEFT_MARGIN + ''.join(row) + '\n')
+    
+        # Show cursor
+        stdout.flush()
 
     def draw_hud_bottom(self, grid_start: int, rendered: list[list[str]]):
         """
         Render the bottom HUD.
         """
-        # Move cursor to the bottom of the terminal
+        # Hide the cursor and move cursor to the bottom of the terminal
+        stdout.write("\033[?25l")
         stdout.write("\033[" + str(SIZE_Y + TOP_MARGIN + grid_start) + ";0H")
+
         # Iterate over the rendered HUD and print each line
         for row in rendered:
             stdout.write(' ' * LEFT_MARGIN + ''.join(row) + '\n')
+        
+        # Show cursor
+        stdout.flush()
     
     # --- Grid Drawing ---
     def draw_diff(self, grid_start: int, render: list[str]):
@@ -64,6 +74,8 @@ class Renderer:
 
                 # Update buffer
                 self.prev_grid[i] = cell
+        
+        # Show cursor
         stdout.flush()
 
     def update_full(self):

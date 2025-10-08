@@ -48,7 +48,7 @@ class HUDElement():
         params = self.values.keys()
         regex_pattern = re.compile('`' + '`|`'.join(re.escape(param) for param in params) + '`')
 
-        self.compiled_text = regex_pattern.sub(lambda match: self.values.get(match.group(0)[1:-1], ''), self.template)
+        self.compiled_text = (regex_pattern.sub(lambda match: self.values.get(match.group(0)[1:-1], ''), self.template))[:SIZE_X]
 
 class HUD():
     def __init__(self, top_huds: list[HUDElement] = list(), bottom_huds: list[HUDElement] = list()):

@@ -12,7 +12,7 @@ from .render.hud import HUD
 class Game:
     """Main game loop and entity manager."""
 
-    def __init__(self, init_hook: Callable[[], None] = lambda: None, update_hook: Callable[[float], None] = lambda dt: None):
+    def __init__(self, init_hook: Callable[[], None] = lambda: None, update_hook: Callable[[float], None] = lambda dt: None, border = False, border_template = '╔═╗\n║ ║\n╚═╝'):
         # Active game entities
         self.entities: list[Entity] = []
 
@@ -35,6 +35,9 @@ class Game:
         self._prev_t  = time.perf_counter() # high-resolution clock
         self._max_frame = 0.25              # clamp huge spikes (seconds)
         self._max_updates_per_frame = 10    # avoid spiral of death
+
+        if border:
+            self.add_entity(Border(self, border_template=border_template))
 
     # --- Main Loop ---
 
@@ -110,3 +113,20 @@ class Game:
         finally:
             self.renderer.clear_screen()
             print("Shutting down…")
+
+class Border(Entity):
+	def __init__(self, game: Game, border_template = '╔═╗\n║ ║\n╚═╝'):
+		super().__init__(game, Vector())
+		
+
+
+		r = f'\t{border_template[0]}' + f'{border_template[1]}' * (SIZE_X-2) + f'{border_template[2]}\n'
+		r += (f'{border_template[4]}' + f'\a' * (SIZE_X - 2) + f"{border_template[6]}\n") * (SIZE_Y - 3)
+		r += f'{border_template[8]}' + f'{border_template[9]}' * (SIZE_X-2) + f'{border_template[10]}'
+
+		self.sprite.load(r)
+		self.sprite.priority = 100
+		self.position = Vector(- SIZE_X / 2, -SIZE_Y)
+
+	def update(self, dt):
+		return super().update(dt)
