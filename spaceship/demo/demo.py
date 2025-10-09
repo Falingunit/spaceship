@@ -1,10 +1,9 @@
 from spaceship.render.entity import Entity
 from spaceship.game import Game
-from spaceship.input.input import *
 from spaceship.render.hud import HUDAlignment, HUDElement
 from spaceship.render.camera import CameraMode
 from spaceship.utils.math import Vector
-from spaceship.utils.constants import *
+from spaceship.utils.constants import SIZE_Y
 
 class Rock(Entity):
 	

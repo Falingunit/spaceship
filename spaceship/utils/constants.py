@@ -19,3 +19,4 @@ TOP_MARGIN = 0
 # 1.0 means square cells in your rendering math.
 # If you detect real console font metrics, override this.
 CHAR_ASPECT = 2
+
