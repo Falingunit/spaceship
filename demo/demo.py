@@ -1,5 +1,5 @@
-from spaceship.render.entity import Entity
 from spaceship.game import Game
+from spaceship.render.entity import Entity
 from spaceship.render.hud import HUDAlignment, HUDElement
 from spaceship.render.camera import CameraMode
 from spaceship.utils.math import Vector
@@ -35,17 +35,17 @@ class Rock(Entity):
 
 	def update(self, dt):
 		
-		held_keys = self.game.input.keys_held
+		held_keys = self.game.input.is_char_held
 
 		speed = 2
 
-		if 's' in held_keys:
+		if held_keys('s'):
 			self.velocity += Vector(0, 1) * speed
-		if 'w' in held_keys:
+		if held_keys('w'):
 			self.velocity += Vector(0, -1) * speed
-		if 'a' in held_keys:
+		if held_keys('a'):
 			self.velocity += Vector(-1, 0) * speed
-		if 'd' in held_keys:
+		if held_keys('d'):
 			self.velocity += Vector(1, 0) * speed
 
 		self.velocity += Vector(0, 20) * dt
@@ -91,9 +91,8 @@ class SpaceInveders():
 		self.bottom_hud.set_value('score', str(int(self.bottom_hud.values['score']) + 1))
 
 	def update(self, dt: float):
-		held_keys = self.game.input.keys_held
-
-		if 'q' in held_keys:
+		if self.game.input.is_char_held('q'):
 			exit()
+			
 if __name__ == '__main__':
 	SpaceInveders()

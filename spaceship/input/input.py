@@ -1,50 +1,45 @@
-import keyboard
+from pynput import keyboard
+from typing import Callable
 
 class Input:
     def __init__(self) -> None:
-        # Cache stores the last checked keys
-        self._cache = []
-        # Dirty flag indicates whether the cache needs refreshing
-        self._dirty = True
-
-    def get_keys_held(self):
-        """
-        Returns a list of all currently pressed keys.
-        This method checks every printable ASCII character (32–126)
-        as well as all modifier keys (shift, ctrl, alt, etc.).
-        """
-
-        held = []
-        keys_to_check = (
-            [chr(i) for i in range(32, 127)] +  # Generate all printable ASCII characters
-            list(keyboard.all_modifiers)        # Add modifier keys
-        )
-
-        for key in keys_to_check:
-            try:
-                if keyboard.is_pressed(key):
-                    held.append(key)
-            except:
-                # Ignore errors from invalid/unrecognized keys
-                pass
-
-        return held
-    
-    @property
-    def keys_held(self):
-        """
-        Returns cached keys that are currently held down.
-        Refreshes the cache only if the 'dirty' flag is set.
-        """
-        if self._dirty:
-            self._cache = self.get_keys_held()
-            self._dirty = False
+        self.held_keys = set()
         
-        return self._cache
+        self.on_press_hooks = set()
+        self.on_release_hooks = set()
 
-    def make_dirty(self):
-        """
-        Marks the cache as 'dirty', so the next call
-        to keys_held will re-check pressed keys.
-        """
-        self._dirty = True
+        self.listener = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
+
+    def on_press(self, key: keyboard.Key | keyboard.KeyCode | None):
+        self.held_keys.add(key)
+        for function in self.on_press_hooks:
+            function(key)
+
+    def on_release(self,key):
+        self.held_keys.discard(key)
+        for function in self.on_release_hooks:
+            function(key)
+
+    def hook_to_keypress(self, function: Callable[[keyboard.Key | keyboard.KeyCode | None], None]):
+        self.on_press_hooks.add(function)
+    def unhook_from_keypress(self, function: Callable[[keyboard.Key | keyboard.KeyCode | None], None]):
+        self.on_press_hooks.discard(function)
+
+    def hook_to_keyrelease(self, function: Callable[[keyboard.Key], None]):
+        self.on_release_hooks.add(function)
+    def unhook_from_keyrelease(self, function: Callable[[keyboard.Key], None]):
+        self.on_release_hooks.discard(function)
+
+    def is_char_held(self, key: str) -> bool:
+        for held in self.held_keys:
+            try:
+                if key == held.char:
+                    return True
+            except AttributeError:
+                continue
+        
+        return False
+
+
+    def is_key_held(self, key: keyboard.Key | keyboard.KeyCode | None) -> bool:
+        return key in self.held_keys

@@ -43,8 +43,6 @@ class Game:
 
     def _fixed_update(self, dt: float) -> None:
         """Fixed update for logic and physics"""
-        # Refresh input cache every logic step
-        self.input.make_dirty()
 
         self.update_hook(dt)
 
@@ -118,8 +116,6 @@ class Border(Entity):
 	def __init__(self, game: Game, border_template = '╔═╗\n║ ║\n╚═╝'):
 		super().__init__(game, Vector())
 		
-
-
 		r = f'\t{border_template[0]}' + f'{border_template[1]}' * (SIZE_X-2) + f'{border_template[2]}\n'
 		r += (f'{border_template[4]}' + f'\a' * (SIZE_X - 2) + f"{border_template[6]}\n") * (SIZE_Y - 3)
 		r += f'{border_template[8]}' + f'{border_template[9]}' * (SIZE_X-2) + f'{border_template[10]}'
