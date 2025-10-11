@@ -9,6 +9,7 @@ class Input:
         self.on_release_hooks = set()
 
         self.listener = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
+        self.listener.start()
 
     def on_press(self, key: keyboard.Key | keyboard.KeyCode | None):
         self.held_keys.add(key)
