@@ -10,10 +10,10 @@ from spaceship.utils.math import Vector
 
 # Fill these values to enable MySQL-backed saves.
 DB_CONFIG = {
-	"host": "",
-	"user": "",
-	"password": "",
-	"database": "",
+	"host": "localhost",
+	"user": "root",
+	"password": "91008",
+	"database": "qwe",
 }
 
 

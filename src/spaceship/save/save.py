@@ -53,7 +53,7 @@ class Manager:
             CREATE TABLE IF NOT EXISTS states (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 data JSON NOT NULL,
-                isLatest BOOLEAN NOT NULL DEFAULT TRUE,
+                isLatest BOOLEAN DEFAULT NULL,
                 profileId INT NOT NULL,
                 eventId INT,
                 timeStamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -85,6 +85,11 @@ class Manager:
                     (name, metadata),
                 )
 
+        self.connection.commit()
+
+        # Cleanup for older states written with isLatest = FALSE to avoid unique
+        # constraint collisions; NULL is allowed to repeat in the unique index.
+        self.cursor.execute("UPDATE states SET isLatest = NULL WHERE isLatest = FALSE")
         self.connection.commit()
 
     # Backwards compatibility with previous typo.
@@ -162,7 +167,7 @@ class Manager:
 
         # Move previous latest off the main branch and insert new latest row.
         self.cursor.execute(
-            "UPDATE states SET isLatest = FALSE WHERE profileId = %s AND isLatest = TRUE",
+            "UPDATE states SET isLatest = NULL WHERE profileId = %s AND isLatest = TRUE",
             (profile_id,),
         )
         self.cursor.execute(
@@ -246,7 +251,7 @@ class Manager:
             raise ValueError("State does not exist for this profile.")
 
         self.cursor.execute(
-            "UPDATE states SET isLatest = FALSE WHERE profileId = %s",
+            "UPDATE states SET isLatest = NULL WHERE profileId = %s",
             (profile_id,),
         )
         self.cursor.execute(
