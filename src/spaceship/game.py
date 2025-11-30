@@ -9,30 +9,41 @@ from .render.render import Renderer
 from .render.entity import Entity
 from .render.hud import HUD
 
+DEFAULT_BORDER_TEMPLATE = '╔═╗\n║ ║\n╚═╝'
+
+
 class Game:
     """Main game loop and entity manager."""
 
-    def __init__(self, init_hook: Callable[[], None] = lambda: None, update_hook: Callable[[float], None] = lambda dt: None, border = False, border_template = '╔═╗\n║ ║\n╚═╝'):
+    def __init__(
+        self,
+        init_hook: Callable[[], None] = lambda: None,
+        update_hook: Callable[[float], None] = lambda dt: None,
+        border: bool = False,
+        border_template: str = DEFAULT_BORDER_TEMPLATE,
+        database=None,
+    ):
         # Active game entities
         self.entities: list[Entity] = []
 
         # User-defined hooks
-        self.init_hook: Callable[[], None]   = init_hook
+        self.init_hook: Callable[[], None] = init_hook
         self.update_hook: Callable[[float], None] = update_hook
 
-        # Initialize Core subsystems
+        # Initialize core subsystems
         self.renderer = Renderer()
-        self.input    = Input()
-        self.camera   = Camera()
+        self.input = Input()
+        self.camera = Camera()
         self.hud = HUD()
+        self.database = database
 
         # Initial terminal setup
         self.renderer.update_full()
 
         # Fixed timestep state
         self.fixed_dt = 1.0 / 60.0          # 60 Hz logic updates
-        self._acc     = 0.0                 # accumulated time
-        self._prev_t  = time.perf_counter() # high-resolution clock
+        self._acc = 0.0                     # accumulated time
+        self._prev_t = time.perf_counter()  # high-resolution clock
         self._max_frame = 0.25              # clamp huge spikes (seconds)
         self._max_updates_per_frame = 10    # avoid spiral of death
 
@@ -42,7 +53,7 @@ class Game:
     # --- Main Loop ---
 
     def _fixed_update(self, dt: float) -> None:
-        """Fixed update for logic and physics"""
+        """Fixed update for logic and physics."""
 
         self.update_hook(dt)
 
@@ -51,9 +62,9 @@ class Game:
             entity.update(dt)
 
     def _render(self) -> None:
-        """As fast as possible render for drawing"""
+        """As fast as possible render for drawing."""
         self.renderer.check_resize()
-        
+
         rendered_top_hud = self.hud.render_top()
         self.renderer.draw_hud_top(rendered_top_hud)
 
@@ -72,7 +83,7 @@ class Game:
     def remove_entity(self, entity: Entity):
         """Remove an entity from the game world."""
         self.entities.remove(entity)
-        
+
     def run(self):
         """Run the main game loop until interrupted."""
         # Clear screen and call init_hook
@@ -81,8 +92,7 @@ class Game:
 
         try:
             while True:
-                
-                #Fixed timestep logic
+                # Fixed timestep logic
                 now = time.perf_counter()
                 frame_time = now - self._prev_t
                 self._prev_t = now
@@ -104,25 +114,31 @@ class Game:
                 # Rendering is done always
                 self._render()
 
-                #To prevent overuse of resources
+                # To prevent overuse of resources
                 time.sleep(0.001)
         except KeyboardInterrupt:
             pass
         finally:
             self.renderer.clear_screen()
-            print("Shutting down…")
+            if self.database and hasattr(self.database, "close"):
+                try:
+                    self.database.close()
+                except Exception:
+                    pass
+            print("Shutting down...")
+
 
 class Border(Entity):
-	def __init__(self, game: Game, border_template = '╔═╗\n║ ║\n╚═╝'):
-		super().__init__(game, Vector())
-		
-		r = f'\t{border_template[0]}' + f'{border_template[1]}' * (SIZE_X-2) + f'{border_template[2]}\n'
-		r += (f'{border_template[4]}' + f'\a' * (SIZE_X - 2) + f"{border_template[6]}\n") * (SIZE_Y - 3)
-		r += f'{border_template[8]}' + f'{border_template[9]}' * (SIZE_X-2) + f'{border_template[10]}'
+    def __init__(self, game: Game, border_template: str = DEFAULT_BORDER_TEMPLATE):
+        super().__init__(game, Vector())
 
-		self.sprite.load(r)
-		self.sprite.priority = 100
-		self.position = Vector(- SIZE_X / 2, -SIZE_Y)
+        r = '\t' + f'{border_template[0]}' + f'{border_template[1]}' * (SIZE_X - 2) + f'{border_template[2]}\n'
+        r += (f'{border_template[4]}' + f"\a" * (SIZE_X - 2) + f"{border_template[6]}\n") * (SIZE_Y - 3)
+        r += f'{border_template[8]}' + f'{border_template[9]}' * (SIZE_X - 2) + f'{border_template[10]}'
 
-	def update(self, dt):
-		return super().update(dt)
+        self.sprite.load(r)
+        self.sprite.priority = 100
+        self.position = Vector(-SIZE_X / 2, -SIZE_Y)
+
+    def update(self, dt):
+        return super().update(dt)
