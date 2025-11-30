@@ -44,7 +44,6 @@ class Renderer:
         for row in rendered:
             stdout.write(' ' * LEFT_MARGIN + ''.join(row) + '\n')
         
-        # Show cursor
         stdout.flush()
     
     # --- Grid Drawing ---
