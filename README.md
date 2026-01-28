@@ -191,3 +191,10 @@ The input subsystem polls the keyboard and exposes `game.input.keys_held`, a set
 - Input is unresponsive: verify OS permissions and that you read `keys_held` inside `update`.
 - Misalignment: use the tab center marker in sprites or choose an appropriate camera mode.
 - Flicker or unexpected redraws: check that your terminal supports ANSI cursor movement and that you are not printing elsewhere.
+
+---
+
+## 8. Conclusion
+
+In conclusion, the Spaceship Engine delivers a solid foundation for building real-time ASCII games in the terminal by bundling a main loop, camera and renderer, sprite-based entities, HUD utilities, and straightforward input polling. It already covers the essentials needed to prototype and ship small experiences while keeping the mental model simple for fast iteration.
+There is plenty of room to evolve the toolkit into a more polished and resilient engine. Adding stronger error handling, packaging and deployment helpers, profiling and performance overlays, and richer sample assets would improve reliability and approachability. Extending input support, exposing API hooks for plug-ins, and providing more tutorials or templates could make the engine more versatile across platforms and genres. These refinements would streamline development and help creators deliver more expressive terminal games with less friction.

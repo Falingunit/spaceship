@@ -61,8 +61,7 @@ class Rock(Entity):
 
 		return super().update(dt)
 
-
-class SpaceInveders:
+class DemoGame:
 	def __init__(self):
 		self.profile_id: int | None = None
 		self.bounce_count = 0
@@ -85,8 +84,8 @@ class SpaceInveders:
 
 	def init(self):
 		vel_hud = HUDElement(template='Velocity: (`x`,`y`)', values={'x': '0', 'y': '0'}, align=HUDAlignment.LEFT)
-		self.shrek = Rock(self.game, self.bounced, vel_hud, Vector(10, 10))
-		self.game.add_entity(self.shrek)
+		self.rock = Rock(self.game, self.bounced, vel_hud, Vector(10, 10))
+		self.game.add_entity(self.rock)
 
 		self.game.camera.mode = CameraMode.CENTER
 
@@ -151,8 +150,8 @@ class SpaceInveders:
 
 		state = {
 			'bounces': self.bounce_count,
-			'position': {'x': self.shrek.position.x, 'y': self.shrek.position.y},
-			'velocity': {'x': self.shrek.velocity.x, 'y': self.shrek.velocity.y},
+			'position': {'x': self.rock.position.x, 'y': self.rock.position.y},
+			'velocity': {'x': self.rock.velocity.x, 'y': self.rock.velocity.y},
 		}
 		self.save_manager.save_state(self.profile_id, state, event=event)
 
@@ -170,25 +169,25 @@ class SpaceInveders:
 
 		pos = data.get('position', {})
 		vel = data.get('velocity', {})
-		self.shrek.position = Vector(
-			pos.get('x', self.shrek.position.x),
-			pos.get('y', self.shrek.position.y),
+		self.rock.position = Vector(
+			pos.get('x', self.rock.position.x),
+			pos.get('y', self.rock.position.y),
 		)
-		self.shrek.velocity = Vector(
-			vel.get('x', self.shrek.velocity.x),
-			vel.get('y', self.shrek.velocity.y),
+		self.rock.velocity = Vector(
+			vel.get('x', self.rock.velocity.x),
+			vel.get('y', self.rock.velocity.y),
 		)
 		return True
 
 	def _reset_state(self):
 		self.bounce_count = 0
 		self.bottom_hud.set_value('score', '0')
-		self.shrek.position = Vector(10, 0)
-		self.shrek.velocity = Vector()
+		self.rock.position = Vector(10, 0)
+		self.rock.velocity = Vector()
 
 		if self.save_manager and self.profile_id is not None:
 			self.save_manager.clear_profile_states(self.profile_id)
 			self._persist_state(event='reset')
 		
 if __name__ == '__main__':
-	SpaceInveders()
+	DemoGame()

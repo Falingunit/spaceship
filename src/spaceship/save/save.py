@@ -92,9 +92,6 @@ class Manager:
         self.cursor.execute("UPDATE states SET isLatest = NULL WHERE isLatest = FALSE")
         self.connection.commit()
 
-    # Backwards compatibility with previous typo.
-    intialize_database = initialize_database
-
     # --- Profiles ---------------------------------------------------------------
     def add_profile(self, name: str, profile_metadata: Mapping[str, Any] | None = None) -> int:
         """Create a profile if it does not exist. Returns profile id."""
