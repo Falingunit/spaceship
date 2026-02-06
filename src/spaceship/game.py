@@ -21,7 +21,6 @@ class Game:
         update_hook: Callable[[float], None] = lambda dt: None,
         border: bool = False,
         border_template: str = DEFAULT_BORDER_TEMPLATE,
-        database=None,
     ):
         # Active game entities
         self.entities: list[Entity] = []
@@ -35,7 +34,6 @@ class Game:
         self.input = Input()
         self.camera = Camera()
         self.hud = HUD()
-        self.database = database
 
         # Initial terminal setup
         self.renderer.update_full()
@@ -120,11 +118,6 @@ class Game:
             pass
         finally:
             self.renderer.clear_screen()
-            if self.database and hasattr(self.database, "close"):
-                try:
-                    self.database.close()
-                except Exception:
-                    pass
             print("Shutting down...")
 
 
@@ -133,7 +126,7 @@ class Border(Entity):
         super().__init__(game, Vector())
 
         r = '\t' + f'{border_template[0]}' + f'{border_template[1]}' * (SIZE_X - 2) + f'{border_template[2]}\n'
-        r += (f'{border_template[4]}' + f"\a" * (SIZE_X - 2) + f"{border_template[6]}\n") * (SIZE_Y - 3)
+        r += (f'{border_template[4]}' + "\a" * (SIZE_X - 2) + f"{border_template[6]}\n") * (SIZE_Y - 3)
         r += f'{border_template[8]}' + f'{border_template[9]}' * (SIZE_X - 2) + f'{border_template[10]}'
 
         self.sprite.load(r)

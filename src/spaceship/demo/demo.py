@@ -4,18 +4,8 @@ from spaceship.game import Game
 from spaceship.render.camera import CameraMode
 from spaceship.render.entity import Entity
 from spaceship.render.hud import HUDAlignment, HUDElement
-from spaceship.save import Manager
 from spaceship.utils.constants import SIZE_Y
 from spaceship.utils.math import Vector
-
-# Fill these values to enable MySQL-backed saves.
-DB_CONFIG = {
-	"host": "localhost",
-	"user": "root",
-	"password": "91008",
-	"database": "qwe",
-}
-
 
 class Rock(Entity):
 	def __init__(self, game: Game, bounce_hook, velocity_hud: HUDElement, position: Vector = Vector()):
@@ -67,21 +57,8 @@ class SpaceInveders:
 		self.profile_id: int | None = None
 		self.bounce_count = 0
 		self.input_hook_registered = False
-		self.save_manager = self._create_save_manager()
-		self.game = Game(init_hook=self.init, update_hook=self.update, border=True, database=self.save_manager)
+		self.game = Game(init_hook=self.init, update_hook=self.update, border=True)
 		self.game.run()
-
-	def _create_save_manager(self):
-		if not all(DB_CONFIG.values()):
-			print("Save system disabled: set DB_CONFIG to enable saving.")
-			return None
-		try:
-			manager = Manager(**DB_CONFIG)
-			manager.initialize_database()
-			return manager
-		except Exception as exc:
-			print(f"Save system disabled: {exc}")
-			return None
 
 	def init(self):
 		vel_hud = HUDElement(template='Velocity: (`x`,`y`)', values={'x': '0', 'y': '0'}, align=HUDAlignment.LEFT)
@@ -103,92 +80,15 @@ class SpaceInveders:
 				align=HUDAlignment.RIGHT
 		)
 		self.game.hud.add_bottom_hud(self.bottom_hud)
-		self._initialize_save_system()
 
 	def bounced(self):
 		self.bounce_count += 1
 		self.bottom_hud.set_value('score', str(self.bounce_count))
-		self._persist_state(event='bounce')
 
 	def update(self, dt: float):
 		if self.game.input.is_char_held('q'):
-			self._persist_state(event='quit')
 			exit()
 
-	def _initialize_save_system(self):
-		if not self.save_manager:
-			return
-
-		self.profile_id = self.save_manager.get_or_create_profile(
-			'demo',
-			{'description': 'Bouncing rock demo'},
-		)
-
-		if not self.input_hook_registered:
-			self.game.input.hook_to_keypress(self._handle_keypress)
-			self.input_hook_registered = True
-
-		if not self._apply_saved_state():
-			self._persist_state(event='init')
-
-	# Keybindings for the save system: P = save, L = load, C = clear/reset.
-	def _handle_keypress(self, key):
-		try:
-			char = key.char
-		except AttributeError:
-			return
-
-		if char == 'p':
-			self._persist_state(event='manual')
-		elif char == 'l':
-			self._apply_saved_state()
-		elif char == 'c':
-			self._reset_state()
-
-	def _persist_state(self, event: str):
-		if not (self.save_manager and self.profile_id is not None):
-			return
-
-		state = {
-			'bounces': self.bounce_count,
-			'position': {'x': self.shrek.position.x, 'y': self.shrek.position.y},
-			'velocity': {'x': self.shrek.velocity.x, 'y': self.shrek.velocity.y},
-		}
-		self.save_manager.save_state(self.profile_id, state, event=event)
-
-	def _apply_saved_state(self) -> bool:
-		if not (self.save_manager and self.profile_id is not None):
-			return False
-
-		latest = self.save_manager.get_latest_state(self.profile_id)
-		if latest is None:
-			return False
-
-		data = latest['data']
-		self.bounce_count = int(data.get('bounces', 0))
-		self.bottom_hud.set_value('score', str(self.bounce_count))
-
-		pos = data.get('position', {})
-		vel = data.get('velocity', {})
-		self.shrek.position = Vector(
-			pos.get('x', self.shrek.position.x),
-			pos.get('y', self.shrek.position.y),
-		)
-		self.shrek.velocity = Vector(
-			vel.get('x', self.shrek.velocity.x),
-			vel.get('y', self.shrek.velocity.y),
-		)
-		return True
-
-	def _reset_state(self):
-		self.bounce_count = 0
-		self.bottom_hud.set_value('score', '0')
-		self.shrek.position = Vector(10, 0)
-		self.shrek.velocity = Vector()
-
-		if self.save_manager and self.profile_id is not None:
-			self.save_manager.clear_profile_states(self.profile_id)
-			self._persist_state(event='reset')
 		
 if __name__ == '__main__':
 	SpaceInveders()
