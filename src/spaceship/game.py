@@ -9,9 +9,6 @@ from .render.render import Renderer
 from .render.entity import Entity
 from .render.hud import HUD
 
-DEFAULT_BORDER_TEMPLATE = '╔═╗\n║ ║\n╚═╝'
-
-
 class Game:
     """Main game loop and entity manager."""
 
@@ -19,8 +16,7 @@ class Game:
         self,
         init_hook: Callable[[], None] = lambda: None,
         update_hook: Callable[[float], None] = lambda dt: None,
-        border: bool = False,
-        border_template: str = DEFAULT_BORDER_TEMPLATE,
+        resize_hook: Callable[[tuple[int, int]], None] = lambda size: None,
     ):
         # Active game entities
         self.entities: list[Entity] = []
@@ -28,6 +24,7 @@ class Game:
         # User-defined hooks
         self.init_hook: Callable[[], None] = init_hook
         self.update_hook: Callable[[float], None] = update_hook
+        self.resize_hook: Callable[[tuple[int, int]], None] = resize_hook
 
         # Initialize core subsystems
         self.renderer = Renderer()
@@ -45,9 +42,6 @@ class Game:
         self._max_frame = 0.25              # clamp huge spikes (seconds)
         self._max_updates_per_frame = 10    # avoid spiral of death
 
-        if border:
-            self.add_entity(Border(self, border_template=border_template))
-
     # --- Main Loop ---
 
     def _fixed_update(self, dt: float) -> None:
@@ -61,8 +55,10 @@ class Game:
 
     def _render(self) -> None:
         """As fast as possible render for drawing."""
-        self.renderer.check_resize()
-
+        size = self.renderer.check_resize()
+        if size:
+            self.resize_hook(size)
+        
         rendered_top_hud = self.hud.render_top()
         self.renderer.draw_hud_top(rendered_top_hud)
 
@@ -119,19 +115,3 @@ class Game:
         finally:
             self.renderer.clear_screen()
             print("Shutting down...")
-
-
-class Border(Entity):
-    def __init__(self, game: Game, border_template: str = DEFAULT_BORDER_TEMPLATE):
-        super().__init__(game, Vector())
-
-        r = '\t' + f'{border_template[0]}' + f'{border_template[1]}' * (SIZE_X - 2) + f'{border_template[2]}\n'
-        r += (f'{border_template[4]}' + "\a" * (SIZE_X - 2) + f"{border_template[6]}\n") * (SIZE_Y - 3)
-        r += f'{border_template[8]}' + f'{border_template[9]}' * (SIZE_X - 2) + f'{border_template[10]}'
-
-        self.sprite.load(r)
-        self.sprite.priority = 100
-        self.position = Vector(-SIZE_X / 2, -SIZE_Y)
-
-    def update(self, dt):
-        return super().update(dt)

@@ -110,3 +110,5 @@ class Renderer:
         size = shutil.get_terminal_size()
         if size != self.prev_terminal_size:
             self.update_full()
+            return size
+        return False

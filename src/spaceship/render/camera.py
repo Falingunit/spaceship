@@ -14,7 +14,7 @@ class CameraMode(Enum):
     BOT_RIGHT = 4  # Origin is bottom-right corner
 
 class Camera:
-    def __init__(self, position: Vector = Vector(), cameraMode: CameraMode = CameraMode.CENTER):
+    def __init__(self, position: Vector = Vector(), cameraMode: CameraMode = CameraMode.TOP_LEFT):
         # Current camera position in world space
         self.position = position
         # How the camera interprets origin offset (center, corners, etc.)

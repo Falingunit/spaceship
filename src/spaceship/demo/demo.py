@@ -14,10 +14,10 @@ class Rock(Entity):
 		self.bounce_hook = bounce_hook
 		self.sprite.load((
 """
-               _._
-             .'--.`.
-             |  .' |
-              `-\t-`'
+  _.__
+.'--. `.
+|  .'  |
+ `-\t-`'
 """
 ))		
 		self.position = Vector(10, 0)
@@ -57,15 +57,13 @@ class SpaceInveders:
 		self.profile_id: int | None = None
 		self.bounce_count = 0
 		self.input_hook_registered = False
-		self.game = Game(init_hook=self.init, update_hook=self.update, border=True)
+		self.game = Game(init_hook=self.init, update_hook=self.update)
 		self.game.run()
 
 	def init(self):
 		vel_hud = HUDElement(template='Velocity: (`x`,`y`)', values={'x': '0', 'y': '0'}, align=HUDAlignment.LEFT)
-		self.shrek = Rock(self.game, self.bounced, vel_hud, Vector(10, 10))
-		self.game.add_entity(self.shrek)
-
-		self.game.camera.mode = CameraMode.CENTER
+		self.rock = Rock(self.game, self.bounced, vel_hud, Vector(10, 10))
+		self.game.add_entity(self.rock)
 
 		self.game.hud.add_bottom_hud(vel_hud)
 		self.game.hud.add_top_hud(
@@ -88,7 +86,6 @@ class SpaceInveders:
 	def update(self, dt: float):
 		if self.game.input.is_char_held('q'):
 			exit()
-
 		
 if __name__ == '__main__':
 	SpaceInveders()

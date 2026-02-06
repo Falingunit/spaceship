@@ -3,9 +3,9 @@ from ..utils.math import Vector
 class Sprite:
     """Represents an ASCII sprite with a position, size, center, and z-priority."""
 
-    def __init__(self):
+    def __init__(self, raw_string='', priority=1):
         # Original (raw) multi-line string used to create the sprite
-        self.raw_string = ''
+        self.raw_string = raw_string
         # 2D character grid as a list of strings (each entry = one row)
         self.decoded_string = []
         # Sprite dimensions in characters: x = width, y = height
@@ -13,10 +13,12 @@ class Sprite:
         # Center of the sprite in local coords; may be set via a tab marker
         self.center = Vector()
         # Z-order priority: higher numbers render on top of lower ones
-        self.priority = 1
+        self.priority = priority
 
         # World-space position of the sprite (updated by owning Entity/Camera)
         self.position = Vector()
+
+        self.load(raw_string, priority)
 
     def load(self, raw_string, priority=1):
         """
@@ -35,7 +37,8 @@ class Sprite:
         for i, line in enumerate(lines):
             # If a tab appears in this line, treat its position as the center
             if '\t' in line:
-                if centerDefined: raise ValueError("Too many \\t characters in sprite.")
+                if centerDefined:
+                    raise ValueError("Too many \\t characters in sprite.")
                 centerDefined = True
                 # Center is the first tab's column (x) and current row (y)
                 self.center = Vector(line.index('\t'), i)
@@ -43,7 +46,7 @@ class Sprite:
                 lines[i] = line[:self.center.x] + line[self.center.x + 1:]
         
         # If no explicit center marker was found, default to (0, 0)
-        if centerDefined == False:
+        if not centerDefined:
             self.center = Vector()
         
         # Store values for rendering
